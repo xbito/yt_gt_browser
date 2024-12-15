@@ -185,6 +185,7 @@ class App:
                     "title": item["snippet"]["title"],
                     "thumbnail": item["snippet"]["thumbnails"]["medium"],
                     "channel": item["snippet"]["channelTitle"],
+                    "channelId": item["snippet"]["channelId"],  # Add channelId
                     "duration": item["contentDetails"]["duration"],
                     "publishedAt": item["snippet"]["publishedAt"],
                 }
@@ -247,7 +248,12 @@ def create_video_card(video_info, task_info):
 
             # Video details
             with ui.column().classes("gap-1 text-sm"):
-                ui.label(f'Channel: {video_info["channel"]}')
+                with ui.row():
+                    ui.label("Channel: ")
+                    ui.link(
+                        text=video_info["channel"],
+                        target=f'https://www.youtube.com/channel/{video_info["channelId"]}',
+                    )
                 ui.label(f'Duration: {parse_duration(video_info["duration"])}')
                 ui.label(f'Published: {relative_time(video_info["publishedAt"])}')
                 ui.separator()
