@@ -448,6 +448,13 @@ async def show_main_ui():
         finally:
             loading.delete()
 
+        # Add footer with repository link
+        with ui.row().classes("w-full justify-center mt-8"):
+            ui.link(
+                text="View on GitHub",
+                target="https://github.com/xbito/yt_gt_browser",
+            ).classes("text-blue-500 underline")
+
 
 def logout():
     """Handle user logout."""
