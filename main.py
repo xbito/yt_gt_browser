@@ -304,17 +304,9 @@ def show_login_ui():
 
 
 def format_duration(total_seconds):
-    """Convert total seconds to a human-readable format."""
+    """Convert total seconds to a simplified human-readable format."""
     hours, remainder = divmod(total_seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    parts = []
-    if hours > 0:
-        parts.append(f"{hours}h")
-    if minutes > 0:
-        parts.append(f"{minutes}m")
-    if seconds > 0:
-        parts.append(f"{seconds}s")
-    return " ".join(parts)
+    return f"{hours}+h" if remainder > 0 else f"{hours}h"
 
 
 def sort_tasks(tasks, video_details, criteria):
@@ -433,9 +425,9 @@ async def show_main_ui():
 
             # Display stats
             with ui.row().classes("w-full justify-center mb-4 gap-4"):
-                ui.label(f"Total Videos: {total_videos}").classes("text-lg")
-                ui.separator().classes("mx-4")
-                ui.label(f"Total Duration: {total_duration}").classes("text-lg")
+                ui.label(
+                    f"Total Videos: {total_videos} | Total Duration: {total_duration}"
+                ).classes("text-lg")
 
             # Sort tasks based on selected criteria
             sort_tasks(tasks, video_details, sorting_criteria.value)
