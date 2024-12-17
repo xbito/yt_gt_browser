@@ -1,3 +1,10 @@
+"""
+YouTube Tasks Browser application main module.
+
+This module provides the core functionality for authenticating with Google APIs
+and managing the interaction between Google Tasks and YouTube data.
+"""
+
 import re
 import pickle
 
@@ -20,6 +27,13 @@ SCOPES = [
 
 
 class App:
+    """
+    Main application class handling authentication and API interactions.
+
+    Manages Google OAuth2 credentials, authentication flow, and provides
+    methods for fetching and processing tasks and YouTube video data.
+    """
+
     def __init__(self):
         self.credentials = None  # Single source of truth for credentials
         self.client_secrets_path = Path("client_secrets.json")
@@ -190,7 +204,15 @@ class App:
 
 
 def sort_tasks(tasks, video_details, criteria):
-    """Sort tasks based on the given criteria."""
+    """
+    Sort tasks based on specified criteria.
+
+    Args:
+        tasks: List of task dictionaries containing video information
+        video_details: Dictionary of video details keyed by video ID
+        criteria: String indicating sort criteria ('Alphabetical', 'Task List',
+                'Duration', 'Channel', or 'Shuffle')
+    """
     if criteria == "Alphabetical":
         tasks.sort(key=lambda task: task["task_title"].lower())
     elif criteria == "Task List":
@@ -245,6 +267,12 @@ app = App()
 
 @ui.page("/")
 async def main():
+    """
+    Main application route handler.
+
+    Displays either the login UI or main application interface based on
+    authentication status.
+    """
     print("Test Is Authenticate? ", app.is_authenticated())
     if app.is_authenticated():
         await show_main_ui(app)
@@ -254,6 +282,15 @@ async def main():
 
 @ui.page("/oauth2callback")
 def oauth2callback(request: Request):
+    """
+    OAuth2 callback handler for Google authentication.
+
+    Args:
+        request: FastAPI request object containing OAuth2 response data
+
+    Returns:
+        RedirectResponse: Redirects to main page after handling authentication
+    """
     print("\n=== OAuth2 Callback Started ===")
     try:
         params = request.query_params
