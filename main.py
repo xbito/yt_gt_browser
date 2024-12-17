@@ -1,25 +1,16 @@
-from nicegui import ui, app as nicegui_app  # Add import for app
-from nicegui.elements.mixins.value_element import ValueElement
+import re
+import pickle
+
+from nicegui import ui
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from pathlib import Path
-import os
-import re
-from urllib.parse import parse_qs, urlparse
-import pickle
-from datetime import datetime, timedelta, timezone  # Add timezone import
 from starlette.responses import RedirectResponse
 from google.auth.transport.requests import Request as GRequest
 from fastapi import Request
-from random import shuffle
-from dateutil.relativedelta import relativedelta
-from dateutil.parser import parse as parse_date
 
-from app_ui import (
-    show_login_ui,
-    show_main_ui,
-)
+from app_ui import show_login_ui, show_main_ui
 
 # OAuth 2.0 configuration
 SCOPES = [
