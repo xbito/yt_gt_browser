@@ -21,6 +21,7 @@ def create_video_card(video_info, task_info):
             ui.link(
                 text=video_info["title"],
                 target=f'https://youtube.com/watch?v={task_info["youtube_ids"][0]}',
+                new_tab=True,
             ).classes("font-bold flex-grow")
 
             # Video details
@@ -30,6 +31,7 @@ def create_video_card(video_info, task_info):
                     ui.link(
                         text=video_info["channel"],
                         target=f'https://www.youtube.com/channel/{video_info["channelId"]}',
+                        new_tab=True,
                     )
                 ui.label(f'Duration: {parse_duration(video_info["duration"])}')
                 ui.label(f'Published: {relative_time(video_info["publishedAt"])}')
@@ -41,7 +43,8 @@ def create_video_card(video_info, task_info):
                     ui.icon("task_alt")
                     ui.link(
                         text="Open in Google Tasks",
-                        target=f"https://tasks.google.com/embed/?origin=https://calendar.google.com&fullWidth=1",
+                        target=task_info["task_url"],
+                        new_tab=True,
                     ).tooltip("Open in Google Tasks")
 
 

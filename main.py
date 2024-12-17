@@ -133,12 +133,10 @@ class App:
 
                     youtube_urls = []
 
-                    # Check title
+                    # Check title and notes for YouTube URLs
                     youtube_urls.extend(
                         self.extract_youtube_urls(task.get("title", ""))
                     )
-
-                    # Check notes
                     youtube_urls.extend(
                         self.extract_youtube_urls(task.get("notes", ""))
                     )
@@ -147,6 +145,9 @@ class App:
                         tasks_with_videos.append(
                             {
                                 "task_list": tasklist["title"],
+                                "task_list_id": tasklist["id"],
+                                "task_id": task["id"],
+                                "task_url": task.get("webViewLink", ""),
                                 "task_title": task.get("title", ""),
                                 "task_notes": task.get("notes", ""),
                                 "youtube_ids": youtube_urls,
@@ -157,7 +158,6 @@ class App:
                 page_token = response.get("nextPageToken")
                 if not page_token:
                     break
-
         return tasks_with_videos
 
     async def get_video_details(self, video_ids):
