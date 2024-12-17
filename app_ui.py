@@ -4,6 +4,8 @@ import re
 from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse as parse_date
+from utils import calculate_duration_seconds
+
 
 def create_video_card(video_info, task_info):
     """Create a card displaying video and task information."""
@@ -40,6 +42,7 @@ def create_video_card(video_info, task_info):
                         target=f"https://tasks.google.com/embed/?origin=https://calendar.google.com&fullWidth=1",
                     ).tooltip("Open in Google Tasks")
 
+
 def show_credentials_instructions():
     with ui.column().classes("w-full items-center justify-center gap-4"):
         ui.label("Missing Google Cloud Credentials").classes("text-h4")
@@ -59,6 +62,7 @@ def show_credentials_instructions():
                 )
             ui.button("Refresh", on_click=lambda: ui.refresh()).classes("mt-4")
 
+
 def show_login_ui(app):
     if not app.has_client_secrets():
         show_credentials_instructions()
@@ -73,10 +77,12 @@ def show_login_ui(app):
                 "mt-4"
             )  # Add dark mode toggle button
 
+
 def format_duration(total_seconds):
     """Convert total seconds to a simplified human-readable format."""
     hours, remainder = divmod(total_seconds, 3600)
     return f"{hours}+h" if remainder > 0 else f"{hours}h"
+
 
 def sort_tasks(tasks, video_details, criteria):
     """Sort tasks based on the given criteria."""
@@ -87,29 +93,7 @@ def sort_tasks(tasks, video_details, criteria):
     elif criteria == "Duration":
         tasks.sort(
             key=lambda task: sum(
-                int(
-                    re.match(
-                        r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?",
-                        video_details[vid]["duration"],
-                    ).group(1)
-                    or 0
-                )
-                * 3600
-                + int(
-                    re.match(
-                        r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?",
-                        video_details[vid]["duration"],
-                    ).group(2)
-                    or 0
-                )
-                * 60
-                + int(
-                    re.match(
-                        r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?",
-                        video_details[vid]["duration"],
-                    ).group(3)
-                    or 0
-                )
+                calculate_duration_seconds(video_details[vid]["duration"])
                 for vid in task["youtube_ids"]
             )
         )
@@ -119,6 +103,7 @@ def sort_tasks(tasks, video_details, criteria):
         )
     elif criteria == "Shuffle":
         shuffle(tasks)
+
 
 async def show_main_ui(app):
     """Display the main UI with video tasks."""
@@ -165,29 +150,8 @@ async def show_main_ui(app):
             # Calculate stats
             total_videos = len(video_ids)
             total_duration_seconds = sum(
-                [
-                    int(
-                        re.match(
-                            r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", video["duration"]
-                        ).group(1)
-                        or 0
-                    )
-                    * 3600
-                    + int(
-                        re.match(
-                            r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", video["duration"]
-                        ).group(2)
-                        or 0
-                    )
-                    * 60
-                    + int(
-                        re.match(
-                            r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", video["duration"]
-                        ).group(3)
-                        or 0
-                    )
-                    for video in video_details.values()
-                ]
+                calculate_duration_seconds(video["duration"])
+                for video in video_details.values()
             )
             total_duration = format_duration(total_duration_seconds)
 
@@ -221,6 +185,7 @@ async def show_main_ui(app):
                 target="https://github.com/xbito/yt_gt_browser",
             ).classes("text-blue-500 underline")
 
+
 def parse_duration(duration):
     """Convert ISO 8601 duration to human readable format."""
     match = re.match(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", duration)
@@ -238,6 +203,7 @@ def parse_duration(duration):
         parts.append(f"{seconds}s")
 
     return " ".join(parts)
+
 
 def relative_time(published_at):
     """Convert a datetime to a summarized relative time string."""

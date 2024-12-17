@@ -16,7 +16,10 @@ from random import shuffle
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse as parse_date
 
-from app_ui import show_login_ui, show_main_ui, create_video_card, show_credentials_instructions
+from app_ui import (
+    show_login_ui,
+    show_main_ui,
+)
 
 # OAuth 2.0 configuration
 SCOPES = [
@@ -195,51 +198,6 @@ class App:
         return video_details
 
 
-def parse_duration(duration):
-    """Convert ISO 8601 duration to human readable format."""
-    match = re.match(r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?", duration)
-    if not match:
-        return "Unknown"
-
-    hours, minutes, seconds = match.groups()
-    parts = []
-
-    if hours:
-        parts.append(f"{hours}h")
-    if minutes:
-        parts.append(f"{minutes}m")
-    if seconds:
-        parts.append(f"{seconds}s")
-
-    return " ".join(parts)
-
-
-def relative_time(published_at):
-    """Convert a datetime to a summarized relative time string."""
-    now = datetime.now(timezone.utc)  # Make now offset-aware
-    published_date = parse_date(published_at)
-    delta = relativedelta(now, published_date)
-
-    if delta.years > 0:
-        return f"{delta.years} year{'s' if delta.years > 1 else ''} ago"
-    elif delta.months > 0:
-        return f"{delta.months} month{'s' if delta.months > 1 else ''} ago"
-    elif delta.days > 0:
-        return f"{delta.days} day{'s' if delta.days > 1 else ''} ago"
-    elif delta.hours > 0:
-        return f"{delta.hours} hour{'s' if delta.hours > 1 else ''} ago"
-    elif delta.minutes > 0:
-        return f"{delta.minutes} minute{'s' if delta.minutes > 1 else ''} ago"
-    else:
-        return "just now"
-
-
-def format_duration(total_seconds):
-    """Convert total seconds to a simplified human-readable format."""
-    hours, remainder = divmod(total_seconds, 3600)
-    return f"{hours}+h" if remainder > 0 else f"{hours}h"
-
-
 def sort_tasks(tasks, video_details, criteria):
     """Sort tasks based on the given criteria."""
     if criteria == "Alphabetical":
@@ -337,4 +295,4 @@ def oauth2callback(request: Request):
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    ui.run(title="YouTube Videos from Google Tasks", dark_mode=app.dark_mode)
+    ui.run(title="YouTube Videos from Google Tasks")
