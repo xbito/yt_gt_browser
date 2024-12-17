@@ -1,3 +1,5 @@
+"""User interface components for YouTube Tasks Browser application."""
+
 from random import shuffle
 import re
 from datetime import datetime, timezone
@@ -5,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse as parse_date
 
 from nicegui import ui
+from nicegui.page import page
 
 from utils import calculate_duration_seconds
 
@@ -49,6 +52,7 @@ def create_video_card(video_info, task_info):
 
 
 def show_credentials_instructions():
+    """Display instructions for setting up Google Cloud credentials."""
     with ui.column().classes("w-full items-center justify-center gap-4"):
         ui.label("Missing Google Cloud Credentials").classes("text-h4")
         with ui.card().classes("max-w-2xl"):
@@ -65,10 +69,11 @@ def show_credentials_instructions():
                 ui.label(
                     '7. Save it as "client_secrets.json" in the same folder as this application'
                 )
-            ui.button("Refresh", on_click=lambda: ui.refresh()).classes("mt-4")
+            ui.button("Refresh", on_click=ui.navigate.reload).classes("mt-4")
 
 
 def show_login_ui(app):
+    """Display the login interface."""
     if not app.has_client_secrets():
         show_credentials_instructions()
     else:
@@ -78,9 +83,7 @@ def show_login_ui(app):
             ui.button("Login with Google", on_click=app.authenticate).classes(
                 "bg-blue-500 text-white"
             )
-            ui.button("Toggle Dark Mode", on_click=app.toggle_dark_mode).classes(
-                "mt-4"
-            )  # Add dark mode toggle button
+            ui.button("Toggle Dark Mode", on_click=app.toggle_dark_mode).classes("mt-4")
 
 
 def format_duration(total_seconds):
@@ -117,15 +120,15 @@ async def show_main_ui(app):
 
         with ui.row().classes("w-full justify-between items-center mb-4 gap-4"):
             with ui.row().classes("gap-2"):
-                ui.button("Refresh", on_click=lambda: ui.refresh()).classes(
+                ui.button("Refresh", on_click=ui.navigate.reload).classes(
                     "bg-blue-500 text-white"
                 )
-                ui.button("Logout", on_click=lambda: logout()).classes(
-                    "bg-red-500 text-white"
-                )
+                from main import logout
+
+                ui.button("Logout", on_click=logout).classes("bg-red-500 text-white")
                 ui.button("Toggle Dark Mode", on_click=app.toggle_dark_mode).classes(
                     "bg-gray-500 text-white"
-                )  # Add dark mode toggle button
+                )
 
             sorting_criteria = ui.select(
                 options=["Alphabetical", "Task List", "Duration", "Channel", "Shuffle"],
@@ -178,8 +181,11 @@ async def show_main_ui(app):
                         if video_id in video_details:
                             create_video_card(video_details[video_id], task)
 
+        except (ConnectionError, TimeoutError) as e:
+            ui.notify(f"Network error: {str(e)}", type="negative")
         except Exception as e:
-            ui.notify(f"Error loading videos: {str(e)}", type="negative")
+            ui.notify(f"Unexpected error: {str(e)}", type="negative")
+            raise  # Re-raise unexpected exceptions for proper handling
         finally:
             loading.delete()
 
@@ -212,19 +218,18 @@ def parse_duration(duration):
 
 def relative_time(published_at):
     """Convert a datetime to a summarized relative time string."""
-    now = datetime.now(timezone.utc)  # Make now offset-aware
+    now = datetime.now(timezone.utc)
     published_date = parse_date(published_at)
     delta = relativedelta(now, published_date)
 
     if delta.years > 0:
         return f"{delta.years} year{'s' if delta.years > 1 else ''} ago"
-    elif delta.months > 0:
+    if delta.months > 0:
         return f"{delta.months} month{'s' if delta.months > 1 else ''} ago"
-    elif delta.days > 0:
+    if delta.days > 0:
         return f"{delta.days} day{'s' if delta.days > 1 else ''} ago"
-    elif delta.hours > 0:
+    if delta.hours > 0:
         return f"{delta.hours} hour{'s' if delta.hours > 1 else ''} ago"
-    elif delta.minutes > 0:
+    if delta.minutes > 0:
         return f"{delta.minutes} minute{'s' if delta.minutes > 1 else ''} ago"
-    else:
-        return "just now"
+    return "just now"
