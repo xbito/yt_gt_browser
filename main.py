@@ -32,7 +32,7 @@ class App:
         """Toggle dark mode state."""
         print("Toggling dark mode: ", self.dark_mode)
         self.dark_mode = not self.dark_mode
-        dark = ui.dark_mode(self.dark_mode)
+        ui.dark_mode(self.dark_mode)
 
     def _load_stored_credentials(self):
         """Load stored credentials and refresh if needed."""

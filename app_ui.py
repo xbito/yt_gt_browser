@@ -1,9 +1,11 @@
-from nicegui import ui
 from random import shuffle
 import re
 from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse as parse_date
+
+from nicegui import ui
+
 from utils import calculate_duration_seconds
 
 
