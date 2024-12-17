@@ -5,9 +5,13 @@ This module provides the core functionality for authenticating with Google APIs
 and managing the interaction between Google Tasks and YouTube data.
 """
 
+# Google API client is not liked by pylint
+# pylint: disable=maybe-no-member
+
 import re
 import pickle
 from pathlib import Path
+from random import shuffle
 
 from nicegui import ui
 from google_auth_oauthlib.flow import Flow
@@ -36,7 +40,7 @@ class App:
     def __init__(self):
         self.credentials = None  # Single source of truth for credentials
         self.client_secrets_path = Path("client_secrets.json")
-        self._flow = None
+        self.auth_flow = None
         self.credentials_path = Path("stored_credentials.pickle")
         self._load_stored_credentials()
         self.dark_mode = False  # Add dark mode state
@@ -76,9 +80,11 @@ class App:
                 pickle.dump(credentials, f)
 
     def has_client_secrets(self):
+        """Check if client_secrets.json file exists."""
         return self.client_secrets_path.exists()
 
     def is_authenticated(self):
+        """Check if user is authenticated."""
         return bool(
             self.credentials and not self.credentials.expired and self.credentials.valid
         )
@@ -88,12 +94,12 @@ class App:
             ui.notify("Missing client_secrets.json file", type="negative")
             return
 
-        self._flow = Flow.from_client_secrets_file(
+        self.auth_flow = Flow.from_client_secrets_file(
             self.client_secrets_path,
             scopes=SCOPES,
             redirect_uri="http://localhost:8080/oauth2callback",
         )
-        auth_url, _ = self._flow.authorization_url(
+        auth_url, _ = self.auth_flow.authorization_url(
             prompt="consent",
             access_type="offline",  # Enable refresh tokens
             include_granted_scopes="true",
@@ -258,7 +264,7 @@ def logout():
     if app.credentials_path.exists():
         app.credentials_path.unlink()
     app.credentials = None
-    ui.refresh()
+    ui.navigate.reload()
 
 
 app = App()
@@ -299,18 +305,18 @@ def oauth2callback(request: Request):
         else:
             print("No code received!")
 
-        if not app._flow:
+        if not app.auth_flow:
             print("Error: Authentication flow not initialized")
             return RedirectResponse("/")
 
         print("Exchanging code for credentials...")
-        app._flow.fetch_token(code=code)
-        credentials = app._flow.credentials
+        app.auth_flow.fetch_token(code=code)
+        credentials = app.auth_flow.credentials
         print(f"Credentials obtained, valid: {credentials.valid}")
 
         app._save_credentials(credentials)
         app.credentials = credentials
-        app._flow = None
+        app.auth_flow = None
 
         print("Authentication completed successfully")
         return RedirectResponse("/")
