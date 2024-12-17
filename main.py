@@ -7,14 +7,13 @@ and managing the interaction between Google Tasks and YouTube data.
 
 import re
 import pickle
+from pathlib import Path
 
 from nicegui import ui
 from google_auth_oauthlib.flow import Flow
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
-from pathlib import Path
-from starlette.responses import RedirectResponse
 from google.auth.transport.requests import Request as GRequest
+from googleapiclient.discovery import build
+from starlette.responses import RedirectResponse
 from fastapi import Request
 
 from app_ui import show_login_ui, show_main_ui
@@ -295,11 +294,10 @@ def oauth2callback(request: Request):
     try:
         params = request.query_params
         code = params.get("code")
-        (
+        if code:
             print(f"Received auth code: {code[:10]}...")
-            if code
-            else print("No code received!")
-        )
+        else:
+            print("No code received!")
 
         if not app._flow:
             print("Error: Authentication flow not initialized")
