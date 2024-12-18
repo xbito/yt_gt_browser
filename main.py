@@ -11,7 +11,6 @@ and managing the interaction between Google Tasks and YouTube data.
 import re
 import pickle
 from pathlib import Path
-from random import shuffle
 
 from nicegui import ui
 from google_auth_oauthlib.flow import Flow
@@ -114,7 +113,7 @@ class App:
             return []
 
         # Match various YouTube URL formats
-        youtube_regex = r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)"  # noqa
+        youtube_regex = r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)"  # pylint: disable=line-too-long
         return re.findall(youtube_regex, text)
 
     async def fetch_tasks_with_videos(self):
@@ -207,57 +206,6 @@ class App:
                 }
 
         return video_details
-
-
-def sort_tasks(tasks, video_details, criteria):
-    """
-    Sort tasks based on specified criteria.
-
-    Args:
-        tasks: List of task dictionaries containing video information
-        video_details: Dictionary of video details keyed by video ID
-        criteria: String indicating sort criteria ('Alphabetical', 'Task List',
-                'Duration', 'Channel', or 'Shuffle')
-    """
-    if criteria == "Alphabetical":
-        tasks.sort(key=lambda task: task["task_title"].lower())
-    elif criteria == "Task List":
-        tasks.sort(key=lambda task: task["task_list"].lower())
-    elif criteria == "Duration":
-        tasks.sort(
-            key=lambda task: sum(
-                int(
-                    re.match(
-                        r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?",
-                        video_details[vid]["duration"],
-                    ).group(1)
-                    or 0
-                )
-                * 3600
-                + int(
-                    re.match(
-                        r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?",
-                        video_details[vid]["duration"],
-                    ).group(2)
-                    or 0
-                )
-                * 60
-                + int(
-                    re.match(
-                        r"PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?",
-                        video_details[vid]["duration"],
-                    ).group(3)
-                    or 0
-                )
-                for vid in task["youtube_ids"]
-            )
-        )
-    elif criteria == "Channel":
-        tasks.sort(
-            key=lambda task: video_details[task["youtube_ids"][0]]["channel"].lower()
-        )
-    elif criteria == "Shuffle":
-        shuffle(tasks)
 
 
 app = App()
