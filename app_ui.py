@@ -112,6 +112,14 @@ def sort_tasks(tasks, video_details, criteria):
         shuffle(tasks)
 
 
+def logout(app):
+    """Handle user logout."""
+    if app.credentials_path.exists():
+        app.credentials_path.unlink()
+    app.credentials = None
+    ui.navigate.reload()
+
+
 async def show_main_ui(app):
     """Display the main UI with video tasks."""
     with ui.column().classes("w-full max-w-7xl mx-auto p-4"):
@@ -122,9 +130,9 @@ async def show_main_ui(app):
                 ui.button("Refresh", on_click=ui.navigate.reload).classes(
                     "bg-blue-500 text-white"
                 )
-                from main import logout
-
-                ui.button("Logout", on_click=logout).classes("bg-red-500 text-white")
+                ui.button("Logout", on_click=lambda: logout(app)).classes(
+                    "bg-red-500 text-white"
+                )
                 ui.button("Toggle Dark Mode", on_click=app.toggle_dark_mode).classes(
                     "bg-gray-500 text-white"
                 )

@@ -114,7 +114,7 @@ class App:
             return []
 
         # Match various YouTube URL formats
-        youtube_regex = r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)"
+        youtube_regex = r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)"  # noqa
         return re.findall(youtube_regex, text)
 
     async def fetch_tasks_with_videos(self):
@@ -258,14 +258,6 @@ def sort_tasks(tasks, video_details, criteria):
         )
     elif criteria == "Shuffle":
         shuffle(tasks)
-
-
-def logout():
-    """Handle user logout."""
-    if app.credentials_path.exists():
-        app.credentials_path.unlink()
-    app.credentials = None
-    ui.navigate.reload()
 
 
 app = App()
