@@ -147,12 +147,33 @@ def logout(app):
     ui.navigate.reload()
 
 
+async def update_video_grid(tasks, video_details, criteria):
+    """Update the video grid with sorted tasks."""
+    # Clear previous grid
+    ui.clear("video-grid")
+
+    # Sort tasks based on selected criteria
+    sort_tasks(tasks, video_details, criteria)
+
+    # Create grid for video cards
+    with ui.grid(id="video-grid").classes(
+        "w-full gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+    ):
+        for task in tasks:
+            valid_videos = [vid for vid in task["youtube_ids"] if vid in video_details]
+            if valid_videos:
+                for video_id in valid_videos:
+                    create_video_card(video_details[video_id], task)
+
+
 async def show_main_ui(app):
     """Display the main UI with video tasks."""
-    with ui.column().classes("w-full max-w-7xl mx-auto p-4"):
+    with ui.column().classes("w-full max-w-7xl mx-auto p-4 gap-4"):
+        # Header
         ui.label("YouTube Videos from Google Tasks").classes("text-h4 mb-4 text-center")
 
-        with ui.row().classes("w-full justify-between items-center mb-4 gap-4"):
+        # Controls row
+        with ui.row().classes("w-full justify-between items-center"):
             with ui.row().classes("gap-2"):
                 ui.button("Refresh", on_click=ui.navigate.reload).classes(
                     "bg-blue-500 text-white"
@@ -168,13 +189,35 @@ async def show_main_ui(app):
                 options=["Alphabetical", "Task List", "Duration", "Channel", "Shuffle"],
                 value="Alphabetical",
                 label="Sort by",
-            ).classes("mb-4")
+                on_change=lambda e: update_grid(e.value),
+            )
+
+        # Stats container (will be populated after data fetch)
+        stats_container = ui.element("div").classes("w-full text-center mb-4")
+
+        # Grid container for videos
+        grid_container = ui.element("div")
+
+        async def update_grid(criteria):
+            """Update grid with new sorting."""
+            grid_container.clear()
+            with grid_container:
+                with ui.grid().classes(
+                    "w-full gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                ):
+                    sort_tasks(tasks, video_details, criteria)
+                    for task in tasks:
+                        valid_videos = [
+                            vid for vid in task["youtube_ids"] if vid in video_details
+                        ]
+                        if valid_videos:
+                            for video_id in valid_videos:
+                                create_video_card(video_details[video_id], task)
 
         # Loading indicator
         loading = ui.spinner("dots", size="lg")
 
         try:
-            # Fetch tasks with videos
             tasks = await app.fetch_tasks_with_videos()
 
             if not tasks:
@@ -183,13 +226,10 @@ async def show_main_ui(app):
                 )
                 return
 
-            # Get unique video IDs
             video_ids = list(set(vid for task in tasks for vid in task["youtube_ids"]))
-
-            # Fetch video details
             video_details = await app.get_video_details(video_ids)
 
-            # Calculate stats
+            # Update stats display
             total_videos = len(video_ids)
             total_duration_seconds = sum(
                 calculate_duration_seconds(video["duration"])
@@ -197,37 +237,24 @@ async def show_main_ui(app):
             )
             total_duration = format_duration(total_duration_seconds)
 
-            # Display stats
-            with ui.row().classes("w-full justify-center mb-4 gap-4"):
+            # Show stats in the dedicated container
+            with stats_container:
                 ui.label(
                     f"Total Videos: {total_videos} | Total Duration: {total_duration}"
-                ).classes("text-lg")
+                ).classes("text-lg font-bold")
 
-            # Sort tasks based on selected criteria
-            sort_tasks(tasks, video_details, sorting_criteria.value)
-
-            # Create grid for video cards
-            with ui.grid().classes(
-                "w-full gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-            ):
-                for task in tasks:
-                    # Only show videos that exist in video_details
-                    valid_videos = [
-                        vid for vid in task["youtube_ids"] if vid in video_details
-                    ]
-                    if valid_videos:  # Only show task if it has valid videos
-                        for video_id in valid_videos:
-                            create_video_card(video_details[video_id], task)
+            # Initial grid creation
+            await update_grid(sorting_criteria.value)
 
         except (ConnectionError, TimeoutError) as e:
             ui.notify(f"Network error: {str(e)}", type="negative")
         except Exception as e:
             ui.notify(f"Unexpected error: {str(e)}", type="negative")
-            raise  # Re-raise unexpected exceptions for proper handling
+            raise
         finally:
             loading.delete()
 
-        # Add footer with repository link
+        # Footer
         with ui.row().classes("w-full justify-center mt-8"):
             ui.link(
                 text="View on GitHub",
