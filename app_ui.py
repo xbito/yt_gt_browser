@@ -7,7 +7,6 @@ from dateutil.relativedelta import relativedelta
 from dateutil.parser import parse as parse_date
 
 from nicegui import ui
-from nicegui.page import page
 
 from utils import calculate_duration_seconds
 

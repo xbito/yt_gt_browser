@@ -61,18 +61,18 @@ class App:
                 if credentials and credentials.expired and credentials.refresh_token:
                     print("Refreshing expired credentials")
                     credentials.refresh(GRequest())
-                    self._save_credentials(credentials)
+                    self.save_credentials(credentials)
 
                 self.credentials = credentials
                 print(
                     f"Loaded credentials, valid: {bool(credentials and not credentials.expired)}"
                 )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             print(f"Error loading credentials: {e}")
             self.credentials_path.unlink(missing_ok=True)
             self.credentials = None
 
-    def _save_credentials(self, credentials):
+    def save_credentials(self, credentials):
         """Save credentials to file."""
         if credentials:
             print("Saving credentials")
@@ -90,6 +90,7 @@ class App:
         )
 
     async def authenticate(self):
+        """Initiate OAuth2 authentication flow."""
         if not self.has_client_secrets():
             ui.notify("Missing client_secrets.json file", type="negative")
             return
@@ -105,7 +106,7 @@ class App:
             include_granted_scopes="true",
         )
         ui.notify("Redirecting to Google for authentication", type="info")
-        ui.run_javascript(f"window.location.href = '{auth_url}'")
+        ui.navigate.to(f"{auth_url}")
 
     def extract_youtube_urls(self, text):
         """Extract YouTube URLs from text."""
@@ -314,13 +315,13 @@ def oauth2callback(request: Request):
         credentials = app.auth_flow.credentials
         print(f"Credentials obtained, valid: {credentials.valid}")
 
-        app._save_credentials(credentials)
+        app.save_credentials(credentials)
         app.credentials = credentials
         app.auth_flow = None
 
         print("Authentication completed successfully")
         return RedirectResponse("/")
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print(f"Authentication error: {str(e)}")
         print(f"Error type: {type(e)}")
         return RedirectResponse("/")
