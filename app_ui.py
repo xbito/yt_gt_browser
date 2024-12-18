@@ -147,25 +147,6 @@ def logout(app):
     ui.navigate.reload()
 
 
-async def update_video_grid(tasks, video_details, criteria):
-    """Update the video grid with sorted tasks."""
-    # Clear previous grid
-    ui.clear("video-grid")
-
-    # Sort tasks based on selected criteria
-    sort_tasks(tasks, video_details, criteria)
-
-    # Create grid for video cards
-    with ui.grid(id="video-grid").classes(
-        "w-full gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-    ):
-        for task in tasks:
-            valid_videos = [vid for vid in task["youtube_ids"] if vid in video_details]
-            if valid_videos:
-                for video_id in valid_videos:
-                    create_video_card(video_details[video_id], task)
-
-
 async def show_main_ui(app):
     """Display the main UI with video tasks."""
     with ui.column().classes("w-full max-w-7xl mx-auto p-4 gap-4"):
