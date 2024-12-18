@@ -93,21 +93,48 @@ def format_duration(total_seconds):
 
 def sort_tasks(tasks, video_details, criteria):
     """Sort tasks based on the given criteria."""
+    print("Sorting tasks by:", criteria)
     if criteria == "Alphabetical":
-        tasks.sort(key=lambda task: task["task_title"].lower())
+
+        def get_video_title(task):
+            try:
+                # Get first available video that exists in video_details
+                for vid_id in task["youtube_ids"]:
+                    if vid_id in video_details:
+                        return video_details[vid_id]["title"].lower()
+                return ""  # Fallback if no valid videos found
+            except (KeyError, IndexError):
+                return ""
+
+        tasks.sort(key=get_video_title)
     elif criteria == "Task List":
         tasks.sort(key=lambda task: task["task_list"].lower())
     elif criteria == "Duration":
-        tasks.sort(
-            key=lambda task: sum(
-                calculate_duration_seconds(video_details[vid]["duration"])
-                for vid in task["youtube_ids"]
-            )
-        )
+
+        def get_total_duration(task):
+            try:
+                return sum(
+                    calculate_duration_seconds(video_details[vid]["duration"])
+                    for vid in task["youtube_ids"]
+                    if vid in video_details
+                )
+            except (KeyError, TypeError):
+                return 0
+
+        tasks.sort(key=get_total_duration)
     elif criteria == "Channel":
-        tasks.sort(
-            key=lambda task: video_details[task["youtube_ids"][0]]["channel"].lower()
-        )
+
+        def get_channel(task):
+            try:
+                # Get first available video that exists in video_details
+                for vid_id in task["youtube_ids"]:
+                    if vid_id in video_details:
+                        return video_details[vid_id]["channel"].lower()
+                return ""  # Fallback if no valid videos found
+            except (KeyError, IndexError):
+                return ""
+
+        tasks.sort(key=get_channel)
     elif criteria == "Shuffle":
         shuffle(tasks)
 
@@ -184,8 +211,12 @@ async def show_main_ui(app):
                 "w-full gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
             ):
                 for task in tasks:
-                    for video_id in task["youtube_ids"]:
-                        if video_id in video_details:
+                    # Only show videos that exist in video_details
+                    valid_videos = [
+                        vid for vid in task["youtube_ids"] if vid in video_details
+                    ]
+                    if valid_videos:  # Only show task if it has valid videos
+                        for video_id in valid_videos:
                             create_video_card(video_details[video_id], task)
 
         except (ConnectionError, TimeoutError) as e:
