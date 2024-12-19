@@ -71,7 +71,7 @@ def show_credentials_instructions():
             ui.button("Refresh", on_click=ui.navigate.reload).classes("mt-4")
 
 
-def show_login_ui(app):
+async def show_login_ui(app, request):
     """Display the login interface."""
     if not app.has_client_secrets():
         show_credentials_instructions()
@@ -79,9 +79,9 @@ def show_login_ui(app):
         with ui.column().classes("w-full items-center justify-center"):
             ui.label("YouTube Videos from Google Tasks").classes("text-h4 mb-4")
             ui.label("Please log in to continue").classes("mb-4")
-            ui.button("Login with Google", on_click=app.authenticate).classes(
-                "bg-blue-500 text-white"
-            )
+            ui.button(
+                "Login with Google", on_click=lambda: app.authenticate(request)
+            ).classes("bg-blue-500 text-white")
             ui.button("Toggle Dark Mode", on_click=app.toggle_dark_mode).classes("mt-4")
 
 

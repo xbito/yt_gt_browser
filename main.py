@@ -18,6 +18,7 @@ from google.auth.transport.requests import Request as GRequest
 from googleapiclient.discovery import build
 from starlette.responses import RedirectResponse
 from fastapi import Request
+from urllib.parse import urljoin
 
 from app_ui import show_login_ui, show_main_ui
 
@@ -88,20 +89,34 @@ class App:
             self.credentials and not self.credentials.expired and self.credentials.valid
         )
 
-    async def authenticate(self):
-        """Initiate OAuth2 authentication flow."""
+    async def authenticate(self, request: Request = None):
+        """
+        Initiate OAuth2 authentication flow.
+
+        Args:
+            request: FastAPI request object to determine the current host
+        """
         if not self.has_client_secrets():
             ui.notify("Missing client_secrets.json file", type="negative")
             return
 
+        # Determine the base URL from the request, fallback to localhost
+        if request:
+            base_url = str(request.base_url).rstrip("/")
+        else:
+            base_url = "http://localhost:8080"
+
+        redirect_uri = f"{base_url}/oauth2callback"
+        print(f"Redirect URI: {redirect_uri}")
+
         self.auth_flow = Flow.from_client_secrets_file(
             self.client_secrets_path,
             scopes=SCOPES,
-            redirect_uri="http://localhost:8080/oauth2callback",
+            redirect_uri=redirect_uri,
         )
         auth_url, _ = self.auth_flow.authorization_url(
             prompt="consent",
-            access_type="offline",  # Enable refresh tokens
+            access_type="offline",
             include_granted_scopes="true",
         )
         ui.notify("Redirecting to Google for authentication", type="info")
@@ -212,7 +227,7 @@ app = App()
 
 
 @ui.page("/")
-async def main():
+async def main(request: Request):
     """
     Main application route handler.
 
@@ -223,7 +238,7 @@ async def main():
     if app.is_authenticated():
         await show_main_ui(app)
     else:
-        show_login_ui(app)
+        await show_login_ui(app, request)
 
 
 @ui.page("/oauth2callback")
