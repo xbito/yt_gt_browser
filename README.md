@@ -6,6 +6,10 @@ In my Google Tasks lists, I have recorded several tasks that mention YouTube vid
 
 This app will let you visualize those so you can finally decide what to watch next! Forget about the algorithm. Why use the YouTube Watch Later playlist when you can build your own software to decide what to watch next!
 
+## Screenshot
+
+![YouTube Tasks Browser Screenshot](docs/ytgtbrowser_screenshot.png)
+
 ## Features
 
 - **YouTube Video Extraction**: Extract YouTube URLs from your Google Tasks.
