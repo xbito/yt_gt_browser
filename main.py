@@ -18,7 +18,6 @@ from google.auth.transport.requests import Request as GRequest
 from googleapiclient.discovery import build
 from starlette.responses import RedirectResponse
 from fastapi import Request
-from urllib.parse import urljoin
 
 from app_ui import show_login_ui, show_main_ui
 
