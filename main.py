@@ -10,9 +10,13 @@ and managing the interaction between Google Tasks and YouTube data.
 
 import re
 import pickle
+import base64
 from pathlib import Path
+import os
+import dotenv
 
-from nicegui import ui
+import dotenv
+from nicegui import ui, app as ng_app
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request as GRequest
 from googleapiclient.discovery import build
@@ -225,6 +229,32 @@ class App:
 app = App()
 
 
+def store_credentials_in_browser(credentials):
+    """
+    Store current credentials in local storage as base64-encoded pickle.
+    Note: This can be a security risk. Use carefully.
+    """
+    data = pickle.dumps(credentials)
+    encoded = base64.b64encode(data).decode("utf-8")
+    ng_app.storage.browser["yt_credentials"] = encoded
+    print("Stored credentials in browser local storage.")
+
+
+def load_credentials_from_browser():
+    """
+    Load credentials from local storage if present.
+    Returns:
+        Credentials object or None if not found
+    """
+    encoded = ng_app.storage.browser.get("yt_credentials", None)
+    if encoded:
+        data = base64.b64decode(encoded.encode("utf-8"))
+        loaded = pickle.loads(data)
+        print("Loaded credentials from browser local storage.")
+        return loaded
+    return None
+
+
 @ui.page("/")
 async def main(request: Request):
     """
@@ -233,6 +263,16 @@ async def main(request: Request):
     Displays either the login UI or main application interface based on
     authentication status.
     """
+    # Try loading from browser storage if we don't have valid credentials
+    if not (app.credentials and app.is_authenticated()):
+        retrieved = load_credentials_from_browser()
+        print("Retrieved credentials from browser storage: ", retrieved)
+        if retrieved and not retrieved.expired and retrieved.valid:
+            print("Using retrieved credentials")
+            app.credentials = retrieved
+        else:
+            print("No valid credentials found")
+
     print("Test Is Authenticate? ", app.is_authenticated())
     if app.is_authenticated():
         await show_main_ui(app)
@@ -273,6 +313,9 @@ def oauth2callback(request: Request):
         app.credentials = credentials
         app.auth_flow = None
 
+        # Store credentials in local storage so a server restart won't break user session
+        store_credentials_in_browser(credentials)
+
         print("Authentication completed successfully")
         return RedirectResponse("/")
     except Exception as e:  # pylint: disable=broad-except
@@ -282,4 +325,17 @@ def oauth2callback(request: Request):
 
 
 if __name__ in {"__main__", "__mp_main__"}:
-    ui.run(title="YouTube Videos from Google Tasks")
+    # Step 1) Load environment variables
+    dotenv.load_dotenv()
+
+    # Step 2) Check for STORAGE_SECRET in environment
+    secret = os.getenv("STORAGE_SECRET")
+
+    # Step 3) If not found, read from file
+    if not secret:
+        secret_file = Path("credentials") / "storage_secret"
+        if secret_file.exists():
+            secret = secret_file.read_text().strip()
+
+    # Step 4) Pass the secret into ui.run(...)
+    ui.run(title="YouTube Videos from Google Tasks", storage_secret=secret)
