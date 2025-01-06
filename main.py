@@ -13,7 +13,6 @@ import pickle
 import base64
 from pathlib import Path
 import os
-import dotenv
 
 import dotenv
 from nicegui import ui, app as ng_app
@@ -357,13 +356,16 @@ if __name__ in {"__main__", "__mp_main__"}:
     # Step 2) Get PORT from environment (fallback to default if not found)
     port_str = os.getenv("PORT")
     if port_str is not None:
-        port = int(port_str)
+        PORT = int(port_str)
+        HOST = "0.0.0.0"
     else:
-        port = 8080  # NiceGUI default
+        PORT = 8080  # NiceGUI default
+        HOST = "127.0.0.1"  # NiceGUI default
 
     # Step 4) Pass port to ui.run(...)
     ui.run(
         title="YouTube Videos from Google Tasks",
         storage_secret=secret,
-        port=port,
+        port=PORT,
+        host=HOST,
     )
