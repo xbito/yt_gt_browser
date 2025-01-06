@@ -166,9 +166,12 @@ async def show_main_ui(app):
                     "bg-gray-500 text-white"
                 )
 
+            # Set the select's value to the cookie if available
+            sorting_value = app.sorting_criteria
+            print("Initial sorting:", sorting_value)
             sorting_criteria = ui.select(
                 options=["Alphabetical", "Task List", "Duration", "Channel", "Shuffle"],
-                value="Alphabetical",
+                value=sorting_value,
                 label="Sort by",
                 on_change=lambda e: update_grid(e.value),
             )
@@ -181,6 +184,8 @@ async def show_main_ui(app):
 
         async def update_grid(criteria):
             """Update grid with new sorting."""
+            # Set a cookie whenever sorting changes
+            ui.run_javascript(f"document.cookie = 'sorting_criteria={criteria};path=/'")
             grid_container.clear()
             with grid_container:
                 with ui.grid().classes(

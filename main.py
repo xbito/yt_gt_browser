@@ -47,12 +47,17 @@ class App:
         self.credentials_path = Path("stored_credentials.pickle")
         self._load_stored_credentials()
         self.dark_mode = False  # Add dark mode state
+        self.sorting_criteria = "Alphabetical"
 
     def toggle_dark_mode(self):
         """Toggle dark mode state."""
-        print("Toggling dark mode: ", self.dark_mode)
         self.dark_mode = not self.dark_mode
+        # 1) Apply dark mode
         ui.dark_mode(self.dark_mode)
+        # 2) Update cookie on client side
+        cookie_val = "1" if self.dark_mode else "0"
+        ui.run_javascript(f"document.cookie = 'dark_mode={cookie_val};path=/'")
+        print("Toggled dark mode, cookie set to:", cookie_val)
 
     def _load_stored_credentials(self):
         """Load stored credentials and refresh if needed."""
@@ -263,6 +268,18 @@ async def main(request: Request):
     Displays either the login UI or main application interface based on
     authentication status.
     """
+    # 3) Read the 'dark_mode' cookie on page load
+    dark_mode_cookie = request.cookies.get("dark_mode")
+    sorting_criteria = request.cookies.get("sorting_criteria")
+    app.sorting_criteria = sorting_criteria
+    if dark_mode_cookie == "1":
+        app.dark_mode = True
+    else:
+        app.dark_mode = False
+
+    # 4) Apply dark mode based on cookie before continuing
+    ui.dark_mode(app.dark_mode)
+
     # Try loading from browser storage if we don't have valid credentials
     if not (app.credentials and app.is_authenticated()):
         retrieved = load_credentials_from_browser()
