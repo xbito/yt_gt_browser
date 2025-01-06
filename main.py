@@ -354,5 +354,16 @@ if __name__ in {"__main__", "__mp_main__"}:
         if secret_file.exists():
             secret = secret_file.read_text().strip()
 
-    # Step 4) Pass the secret into ui.run(...)
-    ui.run(title="YouTube Videos from Google Tasks", storage_secret=secret)
+    # Step 2) Get PORT from environment (fallback to default if not found)
+    port_str = os.getenv("PORT")
+    if port_str is not None:
+        port = int(port_str)
+    else:
+        port = 8080  # NiceGUI default
+
+    # Step 4) Pass port to ui.run(...)
+    ui.run(
+        title="YouTube Videos from Google Tasks",
+        storage_secret=secret,
+        port=port,
+    )
